@@ -331,6 +331,31 @@ CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
 
+-- Trigger: Automatically update updated_at on profiles update
+CREATE OR REPLACE FUNCTION public.set_updated_at()
+RETURNS trigger AS $$
+BEGIN
+  new.updated_at = now();
+  RETURN new;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS on_profile_updated ON public.profiles;
+CREATE TRIGGER on_profile_updated
+  BEFORE UPDATE ON public.profiles
+  FOR EACH ROW EXECUTE PROCEDURE public.set_updated_at();
+
+-- Backfill: Insert profile rows for existing auth.users accounts if missing
+INSERT INTO public.profiles (id, email, full_name, created_at, updated_at)
+SELECT 
+  id, 
+  email, 
+  COALESCE(raw_user_meta_data->>'full_name', ''), 
+  now(), 
+  now()
+FROM auth.users
+ON CONFLICT (id) DO NOTHING;
+
 -- ==============================================================================
 -- 9. REFRESH SCHEMA CACHE
 -- ==============================================================================
