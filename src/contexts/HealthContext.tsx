@@ -73,6 +73,15 @@ interface HealthContextValue {
   updateThresholds: (t: Partial<MonitoringThresholds>) => void;
   // Actions
   clearReadings: () => void;
+  saveSensorReading: (reading: {
+    heartRate: number | null;
+    spo2: number | null;
+    temperature: number | null;
+    systolicBp?: number | null;
+    diastolicBp?: number | null;
+    motionStatus?: any;
+    source?: 'sensor' | 'demo' | 'manual';
+  }) => Promise<{ success: boolean; error?: string; reading?: SensorReading }>;
 }
 
 const HealthContext = createContext<HealthContextValue | null>(null);
@@ -468,6 +477,94 @@ export function HealthProvider({ children }: { children: React.ReactNode }) {
     simulatorRef.current.reset();
   };
 
+  const saveSensorReading = useCallback(async (newReading: {
+    heartRate: number | null;
+    spo2: number | null;
+    temperature: number | null;
+    systolicBp?: number | null;
+    diastolicBp?: number | null;
+    motionStatus?: any;
+    source?: 'sensor' | 'demo' | 'manual';
+  }) => {
+    const timestamp = new Date().toISOString();
+    const source = newReading.source || 'manual';
+    const motionStatus = newReading.motionStatus || 'normal';
+
+    if (sessionType === 'real' && user && isSupabaseConfigured()) {
+      try {
+        const { data, error } = await supabase
+          .from('sensor_readings')
+          .insert({
+            user_id: user.id,
+            device_id: device.deviceId || 'manual-entry',
+            timestamp,
+            heart_rate: newReading.heartRate,
+            spo2: newReading.spo2,
+            temperature: newReading.temperature,
+            systolic_bp: newReading.systolicBp ?? null,
+            diastolic_bp: newReading.diastolicBp ?? null,
+            motion_status: motionStatus,
+            source,
+          })
+          .select()
+          .single();
+
+        if (error) {
+          return { success: false, error: error.message };
+        }
+
+        const saved: SensorReading = {
+          id: data.id,
+          userId: data.user_id,
+          deviceId: data.device_id || '',
+          timestamp: data.timestamp,
+          heartRate: data.heart_rate,
+          spo2: data.spo2,
+          temperature: data.temperature,
+          systolicBp: data.systolic_bp,
+          diastolicBp: data.diastolic_bp,
+          motionStatus: data.motion_status || 'normal',
+          accelerometerX: data.accelerometer_x,
+          accelerometerY: data.accelerometer_y,
+          accelerometerZ: data.accelerometer_z,
+          latitude: data.latitude,
+          longitude: data.longitude,
+          source: data.source || 'manual',
+        };
+
+        setReadings(prev => [...prev, saved]);
+        pushNotification({
+          type: 'info',
+          title: 'Vitals Record Saved',
+          message: `Recorded: HR ${newReading.heartRate ?? '--'}, SpO2 ${newReading.spo2 ?? '--'}% to Supabase`,
+        });
+        return { success: true, reading: saved };
+      } catch (err: any) {
+        return { success: false, error: err?.message || 'Failed to persist sensor reading' };
+      }
+    } else {
+      // In demo mode or offline fallback, save in memory only
+      const syntheticId = `reading-local-${Date.now()}`;
+      const localReading: SensorReading = {
+        id: syntheticId,
+        userId,
+        deviceId: 'demo-device',
+        timestamp,
+        heartRate: newReading.heartRate,
+        spo2: newReading.spo2,
+        temperature: newReading.temperature,
+        systolicBp: newReading.systolicBp ?? null,
+        diastolicBp: newReading.diastolicBp ?? null,
+        motionStatus,
+        latitude: null,
+        longitude: null,
+        source: sessionType === 'demo' ? 'demo' : source,
+      };
+      setReadings(prev => [...prev, localReading]);
+      return { success: true, reading: localReading };
+    }
+  }, [sessionType, user, device.deviceId, userId, pushNotification]);
+
   return (
     <HealthContext.Provider value={{
       readings, latestReading,
@@ -478,6 +575,7 @@ export function HealthProvider({ children }: { children: React.ReactNode }) {
       demoMode: effectiveDemoMode, sessionType, demoScenario, setDemoMode, setDemoScenario,
       settings, updateSettings, updateThresholds,
       clearReadings,
+      saveSensorReading,
     }}>
       {children}
     </HealthContext.Provider>

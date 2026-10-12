@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Heart, Activity, Thermometer, Wind, AlertTriangle,
@@ -12,6 +12,7 @@ import { VitalCard, BloodPressureCard } from '../components/VitalCard';
 import { HealthRiskScoreCard } from '../components/HealthRiskScoreCard';
 import { MedicalDisclaimer } from '../components/MedicalDisclaimer';
 import { LiveChart } from '../components/LiveChart';
+import { predictRisk, sensorReadingToFeatures } from '../lib/mlInference';
 import type { DemoScenario } from '../types';
 
 const SCENARIOS: { id: DemoScenario; label: string; desc: string; badge: string; color: string }[] = [
@@ -48,6 +49,19 @@ export function DashboardPage() {
   // Determine if this is a real user who opened temporary demo exploration
   const isRealUserExploringDemo = sessionType === 'real' && demoMode;
   const isRealUserAccount = sessionType === 'real';
+
+  // Compute assistive Machine Learning Risk Prediction from the trained Random Forest model
+  const mlPrediction = useMemo(() => {
+    if (!latestReading) return null;
+    const prevReading = readings.length > 1 ? readings[readings.length - 2] : null;
+    const features = sensorReadingToFeatures(
+      latestReading,
+      prevReading,
+      latestReading.motionStatus === 'inactive' ? 45 : 5,
+      latestReading.motionStatus === 'fall_detected'
+    );
+    return predictRisk(features);
+  }, [latestReading, readings]);
 
   return (
     <div className="space-y-6">
@@ -351,7 +365,7 @@ export function DashboardPage() {
         {/* Risk Score Widget (5 Cols) */}
         <div className="lg:col-span-5">
           {riskScore ? (
-            <HealthRiskScoreCard score={riskScore} />
+            <HealthRiskScoreCard score={riskScore} mlPrediction={mlPrediction} />
           ) : (
             <div className="card p-6 flex flex-col items-center justify-center min-h-[300px] text-center">
               <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 mb-3">

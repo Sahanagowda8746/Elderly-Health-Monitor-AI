@@ -1,0 +1,243 @@
+{
+  "version": "1.0.0",
+  "model_type": "random_forest_derived",
+  "n_classes": 4,
+  "class_labels": [
+    "Critical",
+    "High",
+    "Low",
+    "Moderate"
+  ],
+  "feature_names": [
+    "heart_rate_bpm",
+    "spo2_percent",
+    "temperature_c",
+    "systolic_bp_mmhg",
+    "diastolic_bp_mmhg",
+    "inactivity_minutes",
+    "possible_fall_event",
+    "heart_rate_change",
+    "spo2_change",
+    "temperature_change",
+    "motion_Active",
+    "motion_Normal",
+    "motion_Possible Fall",
+    "motion_Resting"
+  ],
+  "motion_columns": [
+    "motion_Active",
+    "motion_Normal",
+    "motion_Possible Fall",
+    "motion_Resting"
+  ],
+  "scaler": {
+    "mean": {
+      "heart_rate_bpm": 87.638542,
+      "spo2_percent": 95.284583,
+      "temperature_c": 37.037417,
+      "systolic_bp_mmhg": 123.044167,
+      "diastolic_bp_mmhg": 80.101875,
+      "inactivity_minutes": 29.458333,
+      "possible_fall_event": 0.064583,
+      "heart_rate_change": 0.2025,
+      "spo2_change": -0.045,
+      "temperature_change": -0.00575,
+      "motion_Active": 0.20625,
+      "motion_Normal": 0.225,
+      "motion_Possible Fall": 0.089583,
+      "motion_Resting": 0.479167
+    },
+    "std": {
+      "heart_rate_bpm": 16.172035,
+      "spo2_percent": 2.881025,
+      "temperature_c": 0.579769,
+      "systolic_bp_mmhg": 12.8077,
+      "diastolic_bp_mmhg": 8.556687,
+      "inactivity_minutes": 24.788067,
+      "possible_fall_event": 0.245789,
+      "heart_rate_change": 19.471843,
+      "spo2_change": 3.602183,
+      "temperature_change": 0.674908,
+      "motion_Active": 0.404612,
+      "motion_Normal": 0.417582,
+      "motion_Possible Fall": 0.285584,
+      "motion_Resting": 0.499566
+    }
+  },
+  "feature_importances": {
+    "heart_rate_bpm": 0.180626,
+    "spo2_percent": 0.225571,
+    "temperature_c": 0.075777,
+    "systolic_bp_mmhg": 0.025497,
+    "diastolic_bp_mmhg": 0.04527,
+    "inactivity_minutes": 0.080882,
+    "possible_fall_event": 0.020623,
+    "heart_rate_change": 0.113678,
+    "spo2_change": 0.135875,
+    "temperature_change": 0.054013,
+    "motion_Active": 0.005987,
+    "motion_Normal": 0.010188,
+    "motion_Possible Fall": 0.016952,
+    "motion_Resting": 0.009061
+  },
+  "risk_zones": {
+    "heart_rate_bpm": {
+      "low_risk": {
+        "min": 55,
+        "max": 95
+      },
+      "moderate_risk": {
+        "min_low": 45,
+        "max_low": 55,
+        "min_high": 95,
+        "max_high": 115
+      },
+      "high_risk": {
+        "min_low": 35,
+        "max_low": 45,
+        "min_high": 115,
+        "max_high": 130
+      },
+      "critical": {
+        "below": 35,
+        "above": 130
+      }
+    },
+    "spo2_percent": {
+      "low_risk": {
+        "min": 95,
+        "max": 100
+      },
+      "moderate_risk": {
+        "min": 92,
+        "max": 95
+      },
+      "high_risk": {
+        "min": 88,
+        "max": 92
+      },
+      "critical": {
+        "below": 88
+      }
+    },
+    "temperature_c": {
+      "low_risk": {
+        "min": 36.1,
+        "max": 37.5
+      },
+      "moderate_risk": {
+        "min_low": 35.5,
+        "max_low": 36.1,
+        "min_high": 37.5,
+        "max_high": 38.2
+      },
+      "high_risk": {
+        "min_low": 34.5,
+        "max_low": 35.5,
+        "min_high": 38.2,
+        "max_high": 39.5
+      },
+      "critical": {
+        "below": 34.5,
+        "above": 39.5
+      }
+    },
+    "systolic_bp_mmhg": {
+      "low_risk": {
+        "min": 100,
+        "max": 135
+      },
+      "moderate_risk": {
+        "min_low": 85,
+        "max_low": 100,
+        "min_high": 135,
+        "max_high": 155
+      },
+      "high_risk": {
+        "min_low": 70,
+        "max_low": 85,
+        "min_high": 155,
+        "max_high": 180
+      },
+      "critical": {
+        "below": 70,
+        "above": 180
+      }
+    },
+    "diastolic_bp_mmhg": {
+      "low_risk": {
+        "min": 60,
+        "max": 85
+      },
+      "moderate_risk": {
+        "min_low": 50,
+        "max_low": 60,
+        "min_high": 85,
+        "max_high": 95
+      },
+      "high_risk": {
+        "min_low": 40,
+        "max_low": 50,
+        "min_high": 95,
+        "max_high": 110
+      },
+      "critical": {
+        "below": 40,
+        "above": 110
+      }
+    }
+  },
+  "category_weights": {
+    "heart_rate": 0.2943,
+    "spo2": 0.3614,
+    "temperature": 0.1298,
+    "blood_pressure": 0.0708,
+    "inactivity": 0.0809,
+    "fall_event": 0.0206
+  },
+  "change_thresholds": {
+    "heart_rate_change": {
+      "warning": 8.0,
+      "high": 15.0,
+      "critical": 25.0
+    },
+    "spo2_change": {
+      "warning": -2.0,
+      "high": -4.0,
+      "critical": -6.0
+    },
+    "temperature_change": {
+      "warning": 0.5,
+      "high": 1.0,
+      "critical": 1.5
+    }
+  },
+  "inactivity_thresholds": {
+    "warning": 30,
+    "high": 60,
+    "critical": 120
+  },
+  "fall_event_score": 30,
+  "multi_param_bonus": {
+    "two_params": 10,
+    "three_or_more": 25
+  },
+  "score_to_class": {
+    "Low": {
+      "min": 0,
+      "max": 25
+    },
+    "Moderate": {
+      "min": 26,
+      "max": 55
+    },
+    "High": {
+      "min": 56,
+      "max": 80
+    },
+    "Critical": {
+      "min": 81,
+      "max": 100
+    }
+  }
+}

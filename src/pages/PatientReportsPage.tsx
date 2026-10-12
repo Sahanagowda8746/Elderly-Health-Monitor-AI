@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import {
-  FileText, Upload, TrendingUp, TrendingDown, Minus, Layers
+  FileText, Upload, TrendingUp, TrendingDown, Minus, Layers,
+  Database, CheckCircle2, RefreshCw
 } from 'lucide-react';
 import { useHealth } from '../contexts/HealthContext';
+import { useAuth } from '../contexts/AuthContext';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { parseReportText, compareReports, type ParsedReport, type ComparisonResult } from '../lib/reportParser';
 import { MedicalDisclaimer } from '../components/MedicalDisclaimer';
 
@@ -45,12 +48,64 @@ Sodium: 138 mEq/L (Reference Range: 135 - 145)
 `;
 
 export function PatientReportsPage() {
-  const { latestReading } = useHealth();
+  const { latestReading, sessionType } = useHealth();
+  const { user } = useAuth();
 
   const [selectedReportName, setSelectedReportName] = useState('September 2026 Comprehensive Lab');
   const [parsedCurrent, setParsedCurrent] = useState<ParsedReport>(() => parseReportText(SAMPLE_REPORT_B));
   const [parsedPrevious] = useState<ParsedReport>(() => parseReportText(SAMPLE_REPORT_A));
   const [activeTab, setActiveTab] = useState<'extracted' | 'comparison' | 'synthesis'>('extracted');
+  const [isSavingReport, setIsSavingReport] = useState(false);
+  const [saveReportStatus, setSaveReportStatus] = useState<string | null>(null);
+
+  const handleSaveReportToHistory = async () => {
+    if (sessionType !== 'real' || !user || !isSupabaseConfigured()) {
+      setSaveReportStatus('Demo simulation: report marked as saved to session.');
+      setTimeout(() => setSaveReportStatus(null), 3000);
+      return;
+    }
+
+    setIsSavingReport(true);
+    try {
+      const { data: rep, error: rErr } = await supabase
+        .from('patient_reports')
+        .insert({
+          user_id: user.id,
+          report_name: selectedReportName,
+          report_type: 'blood_test',
+          report_date: new Date().toISOString().split('T')[0],
+          extraction_status: 'complete',
+          analysis_status: 'complete',
+          data_quality: parsedCurrent.dataQuality,
+          parameter_count: parsedCurrent.parameters.length,
+          is_demo: false,
+        })
+        .select()
+        .single();
+
+      if (rErr) throw rErr;
+
+      if (parsedCurrent.parameters.length > 0 && rep) {
+        const paramsToInsert = parsedCurrent.parameters.map(p => ({
+          report_id: rep.id,
+          user_id: user.id,
+          parameter_name: p.parameterName,
+          value: String(p.value),
+          unit: p.unit || null,
+          reference_range: p.referenceRange || null,
+          status: p.status || 'normal',
+        }));
+
+        await supabase.from('report_parameters').insert(paramsToInsert);
+      }
+      setSaveReportStatus('Report successfully saved to your personal Health History!');
+    } catch (err: any) {
+      setSaveReportStatus(`Error saving: ${err.message || 'Database error'}`);
+    } finally {
+      setIsSavingReport(false);
+      setTimeout(() => setSaveReportStatus(null), 4000);
+    }
+  };
 
   const comparisons: ComparisonResult[] = compareReports(
     parsedPrevious.parameters,
@@ -152,10 +207,27 @@ export function PatientReportsPage() {
             </label>
           </div>
 
-          <div className="mt-4 flex items-center justify-between text-xs text-slate-500">
-            <span className="font-medium text-slate-700">Active Document: {selectedReportName}</span>
-            <span className="font-mono text-teal-600 font-semibold">{parsedCurrent.extractedCount} Biomarkers Extracted</span>
+          <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-500">
+            <div>
+              <span className="font-medium text-slate-700">Active Document: {selectedReportName}</span>
+              <span className="ml-2 font-mono text-teal-600 font-semibold">{parsedCurrent.extractedCount} Biomarkers Extracted</span>
+            </div>
+            <button
+              onClick={handleSaveReportToHistory}
+              disabled={isSavingReport}
+              className="px-3.5 py-1.5 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl text-xs flex items-center gap-1.5 transition-colors shadow-sm disabled:opacity-50 flex-shrink-0"
+            >
+              {isSavingReport ? <RefreshCw size={13} className="animate-spin" /> : <Database size={13} />}
+              <span>Save Report to Health History</span>
+            </button>
           </div>
+
+          {saveReportStatus && (
+            <div className="mt-3 p-2.5 rounded-xl bg-teal-50 border border-teal-200 text-teal-800 text-xs font-semibold flex items-center gap-2">
+              <CheckCircle2 size={15} className="text-teal-600" />
+              <span>{saveReportStatus}</span>
+            </div>
+          )}
         </div>
 
         {/* Pipeline Intelligence Banner */}

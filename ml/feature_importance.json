@@ -1,0 +1,58 @@
+[
+  {
+    "feature": "spo2_percent",
+    "importance": 0.225571
+  },
+  {
+    "feature": "heart_rate_bpm",
+    "importance": 0.180626
+  },
+  {
+    "feature": "spo2_change",
+    "importance": 0.135875
+  },
+  {
+    "feature": "heart_rate_change",
+    "importance": 0.113678
+  },
+  {
+    "feature": "inactivity_minutes",
+    "importance": 0.080882
+  },
+  {
+    "feature": "temperature_c",
+    "importance": 0.075777
+  },
+  {
+    "feature": "temperature_change",
+    "importance": 0.054013
+  },
+  {
+    "feature": "diastolic_bp_mmhg",
+    "importance": 0.04527
+  },
+  {
+    "feature": "systolic_bp_mmhg",
+    "importance": 0.025497
+  },
+  {
+    "feature": "possible_fall_event",
+    "importance": 0.020623
+  },
+  {
+    "feature": "motion_Possible Fall",
+    "importance": 0.016952
+  },
+  {
+    "feature": "motion_Normal",
+    "importance": 0.010188
+  },
+  {
+    "feature": "motion_Resting",
+    "importance": 0.009061
+  },
+  {
+    "feature": "motion_Active",
+    "importance": 0.005987
+  }
+]
